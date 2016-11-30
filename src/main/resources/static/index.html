@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Server Sent Events</title>
+</head>
+<body>
+
+<div id="messages" style="height: 300px; width: 500px; overflow: auto;">
+</div>
+<div id="text" style="margin-top: 20px">
+	<input type="text" id="message" size="74"/>
+	<button onclick="sendMessage()">Send</button>
+</div>
+
+<script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script>
+<script type="text/javascript">
+	var source = null;
+
+	if (typeof(EventSource) !== "undefined") {
+		console.log("Client supports SSE!");
+
+		source = new EventSource("/sse/stream");
+
+		source.addEventListener('open', function () {
+			console.log("Connection opened!");
+		}, false);
+
+		source.addEventListener('message', function (e) {
+			var message = jQuery.parseJSON(e.data);
+			$("#messages").append("<p>" + message.time + ": " + message.text + "</p>");
+		}, false);
+
+		source.addEventListener('error', function (e) {
+			if (e.readyState == EventSource.CLOSED) {
+				console.log("Connection closed!");
+			}
+		}, false);
+	} else {
+		alert("Client does not support SSE!");
+	}
+
+	function sendMessage() {
+		var $messageField = $("#message");
+		var text = $messageField.val() + "";
+		text = text.trim();
+		if (text.length > 0) {
+			$.ajax({
+				type: "POST",
+				url: "/message",
+				contentType: "application/json",
+				data: JSON.stringify({text: text})
+			});
+		}
+		$messageField.val("");
+	}
+</script>
+</body>
+</html>
